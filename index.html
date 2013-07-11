@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+	
+	<head>
+		
+		<title>Pong</title>
+		
+		<style type="text/css">
+			
+			 html, body { padding: 0px; margin: 0px; width: 100%; height: 100%; }
+			
+			#mainCanvas {
+				width: 100%;
+				height: 100%;
+			}
+			
+			#canvasContainer {
+				position: relative;
+				width: 800px;
+				height: 600px;
+			}
+		
+		</style>
+
+		<script type="text/javascript" src="Ball.js"></script>
+		<script type="text/javascript" src="Paddle.js"></script>
+		<script type="text/javascript" src="raf.js"></script>
+		<script type="text/javascript" src="Pong.js"></script>
+		<script type="text/javascript">
+			
+			var pong = new Pong();
+			
+			function init() {
+				
+				//Disallow window dragging on touch devices//
+				var canvas = document.getElementById("mainCanvas");
+				var container = document.getElementById("canvasContainer");
+				canvas.addEventListener("touchmove", defaultBehaviour_prevent, false);
+				
+				//Set up audio//
+				wallClip = document.getElementById("audioWall");
+				leftClip = document.getElementById("audioPaddleLeft");
+				rightClip = document.getElementById("audioPaddleRight");
+				scoreClip = document.getElementById("audioScore");
+				var audio = { wall:wallClip, left:leftClip, right:rightClip, score:scoreClip };
+				pong.audio_set(audio);
+				
+				//Pass canvas and containing div refs to Pong//
+				pong.canvas_set(canvas);
+				pong.container_set(container);
+				
+				//Load and pass visual assets to Pong//
+				var image = new Image();
+				image.src = "Assets.png";
+				image.onload = function () {
+					pong.visualAssets_set(image);
+					game_animate();
+				}
+				
+				//Set up window/canvas sizing//
+				window.onresize = container_resize;
+				container_resize();
+			}
+			
+			function game_animate() {
+				requestAnimationFrame(game_animate);
+				
+				pong.state_update();
+				pong.state_render();
+			}
+			
+			function defaultBehaviour_prevent(evt) {
+				evt.preventDefault();
+			}
+			
+			function container_resize() {
+				var wW = window.innerWidth;
+				var wH = window.innerHeight;
+				var wAR = wW / wH;
+				var cAR = 800 / 600;
+				var cW = wW * 0.9;
+				var cH = wH * 0.9;
+				if (wAR > cAR) {	//Height dictates scale
+					cW = cH * cAR;
+				} else {			//Width dictates scale
+					cH = cW / cAR;
+				}
+				
+				var container = document.getElementById("canvasContainer");
+				
+				container.style.width = cW + "px";
+				container.style.height = cH + "px";
+				
+				container.style.top = (0.5 * (window.innerHeight - cH)) + "px";
+				container.style.left = (0.5 * (window.innerWidth - cW)) + "px";
+			}
+			
+		</script>
+		
+	</head>
+	
+	<body onload="init()">
+		
+		<div id="canvasContainer">
+			<canvas id="mainCanvas" width="800px" height="600px">Canvas isn't supported on your browser/device! :(</canvas>
+		</div>
+		
+		<audio id="audioWall">
+			<source src="E4.mp3" type="audio/mpeg"/>
+		</audio>
+		
+		<audio id="audioPaddleLeft">
+			<source src="D5.mp3" type="audio/mpeg"/>
+		</audio>
+		
+		<audio id="audioPaddleRight">
+			<source src="F5.mp3" type="audio/mpeg"/>
+		</audio>
+		
+		<audio id="audioScore">
+			<source src="A3.mp3" type="audio/mpeg"/>
+		</audio>
+		
+	</body>
+
+</html>
