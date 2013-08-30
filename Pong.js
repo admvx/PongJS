@@ -75,7 +75,8 @@
 	}
 	
 	Pong.prototype.canvas_mouseMove = function(evt) {
-		this.mouseY = (evt.offsetY * Pong.GAME_HEIGHT) / parseInt(this.container.style.height, 10);
+		if (evt.offsetY) this.mouseY = (evt.offsetY * Pong.GAME_HEIGHT) / parseInt(this.container.style.height, 10);
+		else if (evt.pageY) this.mouseY = ((evt.pageY - parseInt(this.container.style.top, 10)) * Pong.GAME_HEIGHT) / parseInt(this.container.style.height, 10);
 		
 		if (! this.audioInited) this.audio_init();
 	}
