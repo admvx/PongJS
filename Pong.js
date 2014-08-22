@@ -7,10 +7,15 @@
 	Pong.CPU_PADDLE_MIN_EASE = 0.005;
 	Pong.CPU_PADDLE_MAX_EASE = 0.13;
 	
+	Pong.SCAN_MIN = -125;
+	Pong.SCAN_MAX = 725;
+	Pong.SCAN_INC = 1.5;
+	
 	//Graphic asset positioning format:- x, y: top-left position to begin sampling from; w, h: width and height of rectangle to sample//
 	Pong.BALL_ASSET = { x:80, y:0, w:80, h:80 };
 	Pong.PADDLE_ASSET = { x:0, y:0, w:80, h:210 };
 	Pong.GRID_ASSET = { x:190, y:0, w:800, h:600 };
+	Pong.SCAN_ASSET = { x:190, y:630, w:800, h:112 };
 	Pong.DIGIT_ASSETS = [
 		{ x:7, y:208, w:78, h:78 },		//0
 		{ x:7, y:286, w:78, h:78 },		//1
@@ -43,6 +48,11 @@
 		this.rightScore = 0;
 		
 		this.mouseY = 300;
+		
+		this.scanY = Pong.SCAN_MIN;
+		this.scanAlpha = 0;
+		this.scanPhase = 0;
+		this.scanChange = false;
 		
 		this.rightPaddle.x = Pong.GAME_WIDTH - 20;
 	}
@@ -102,13 +112,14 @@
 		
 		if (this.useWebAudioApi) {
 			if (this.audioLoading) return;
+			this.audioLoading = true;
+			
 			buffer = this.audioContext.createBuffer(1, 1, 22050);
 			var source = this.audioContext.createBufferSource();
 			source.buffer = buffer;
 			source.connect(this.audioContext.destination);
-			source.noteOn(0);
+			source.start ? source.start(0) : source.noteOn(0);
 			
-			this.audioLoading = true;
 			this.currentLoadingClip = -1;
 			this.numAudioClips = Pong.AUDIO_ASSETS.length;
 			this.webAudio_loadNext();
@@ -166,7 +177,7 @@
 			var source = this.audioContext.createBufferSource();
 			source.buffer = audioObj.buffer;
 			source.connect(this.audioContext.destination);
-			source.noteOn(0);
+			source.start(0);
 			
 		} else {
 			this.audio[clipId].play();
@@ -242,11 +253,18 @@
 			if (setPassedEdge) this.ball.passedEdge = true;
 		}
 		
+		//Point scoring//
 		if ((this.ball.x + (this.ball.width * 0.5)) < 0) {
 			this.point_score("right");
 		} else if ((this.ball.x - (this.ball.width * 0.5)) > Pong.GAME_WIDTH) {
 			this.point_score("left");
 		}
+		
+		//Scan appearance//
+		this.scanY += Pong.SCAN_INC;
+		if (this.scanY > Pong.SCAN_MAX) this.scanY = Pong.SCAN_MIN;
+		this.scanPhase ++;
+		if (this.scanPhase >= 4) this.scanPhase = 0;
 	}
 	
 	Pong.prototype.value_easeExponential = function(prop, init, maxDelta) {
@@ -292,6 +310,17 @@
 		this.context.fillStyle = "rgb(20, 20, 20)";
 		this.context.fillRect(0, 0, Pong.GAME_WIDTH, Pong.GAME_HEIGHT);
 		
+		//Draw scan//
+		if (this.scanChange) {
+			this.scanAlpha = 0.25 + (this.scanPhase * 0.25) + (Math.random() * 0.4);
+		}
+		this.context.save();	
+		this.context.globalAlpha = this.scanAlpha;
+		this.asset_draw(Pong.SCAN_ASSET, 400, this.scanY, 2);
+		this.context.restore();
+		
+		this.scanChange = ! this.scanChange;
+		
 		//Draw ball//
 		this.asset_draw(Pong.BALL_ASSET, this.ball.x, this.ball.y);
 		
@@ -307,9 +336,10 @@
 		this.asset_draw(Pong.GRID_ASSET, Pong.GAME_WIDTH * 0.5, Pong.GAME_HEIGHT * 0.5);
 	}
 	
-	Pong.prototype.asset_draw = function(posObj, locX, locY) {
+	Pong.prototype.asset_draw = function(posObj, locX, locY, heightAdjust) {
+		if (heightAdjust == null) heightAdjust = 1;
 		//Arguments: source image, sample origin X, sample origin Y, sample width, sample height, canvas target X, canvas target Y, target width, target height
-		this.context.drawImage(this.assets, posObj.x, posObj.y, posObj.w, posObj.h, locX - (posObj.w * 0.5), locY - (posObj.h * 0.5), posObj.w, posObj.h);
+		this.context.drawImage(this.assets, posObj.x, posObj.y, posObj.w, posObj.h, locX - (posObj.w * 0.5), locY - (posObj.h * 0.5), posObj.w, posObj.h*heightAdjust);
 	}
 	
 	
